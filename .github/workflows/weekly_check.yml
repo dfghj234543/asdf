@@ -20,12 +20,12 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install libraries
-        run: pip install requests beautifulsoup4 pandas matplotlib fpdf tweepy openai
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pandas matplotlib fpdf openai
 
       - name: Run script
         env:
-          TWITTER_BEARER: ${{ secrets.TWITTER_BEARER }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
         run: python reputation_watch.py
