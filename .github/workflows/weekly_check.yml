@@ -1,8 +1,10 @@
-name: Weekly Reputation Watch
+name: Reputation Watch 3x Daily
 
 on:
   schedule:
-    - cron: '0 22 * * 1'  # 毎週月曜 7:00 JST（UTC22:00）
+    - cron: '0 22 * * *'   # JST 07:00（UTC 22:00）
+    - cron: '0 5 * * *'    # JST 14:00（UTC 05:00）
+    - cron: '0 12 * * *'   # JST 21:00（UTC 12:00）
   workflow_dispatch:
 
 jobs:
@@ -12,7 +14,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Setup Python
         uses: actions/setup-python@v2
-        with: python-version: '3.9'
+        with:
+          python-version: '3.9'
       - name: Install libraries
         run: pip install requests beautifulsoup4 pandas matplotlib fpdf tweepy openai
       - name: Run script
@@ -21,3 +24,4 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
         run: python reputation_watch.py
+
