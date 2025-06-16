@@ -94,20 +94,28 @@ def send_email():
 
 # --- メイン処理 ---
 def main():
-    records = []
-    today = datetime.now()
-    week_start = today - timedelta(days=7)
-    for kw in KEYWORDS:
-        for source, fn in [("Google", fetch_google_snippets), ("Caloo", fetch_cahoo), ("Twitter", fetch_twitter)]:
-            texts = fn(kw)
-            scores = analyze_sentiment(texts)
-            for t, s in zip(texts, scores):
-                records.append({"date": today.date(), "keyword": kv, "source":source, "text":t, "sentiment":s})
-    df = pd.DataFrame(records)
-    df.to_csv("weekly_data.csv", index=False)
-    generate_report(df)
-    send_email()
+   # --- Googleクチコミ：なかむら矯正歯科 ---
+url_nakamura = "https://g.co/kgs/NNDaiD5"
+texts1 = fetch_google_reviews(url_nakamura)
+scores1 = analyze_sentiment(texts1)
+for t, s in zip(texts1, scores1):
+    records.append({
+        "date": today.date(),
+        "keyword": "Googleクチコミ（なかむら矯正歯科）",
+        "source": "Googleレビュー",
+        "text": t,
+        "sentiment": s
+    })
 
-if __name__ == "__main__":
-    main()
-
+# --- Googleクチコミ：スタジオブリジャ ---
+url_bridger = "https://www.google.com/maps/place/スタジオブリジャ/@35.3938045,139.4493776,17z"
+texts2 = fetch_google_reviews(url_bridger)
+scores2 = analyze_sentiment(texts2)
+for t, s in zip(texts2, scores2):
+    records.append({
+        "date": today.date(),
+        "keyword": "Googleクチコミ（スタジオブリジャ）",
+        "source": "Googleレビュー",
+        "text": t,
+        "sentiment": s
+    })
