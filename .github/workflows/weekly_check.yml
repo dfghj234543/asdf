@@ -1,0 +1,23 @@
+name: Weekly Reputation Watch
+
+on:
+  schedule:
+    - cron: '0 22 * * 1'  # 毎週月曜 7:00 JST（UTC22:00）
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with: python-version: '3.9'
+      - name: Install libraries
+        run: pip install requests beautifulsoup4 pandas matplotlib fpdf tweepy openai
+      - name: Run script
+        env:
+          TWITTER_BEARER: ${{ secrets.TWITTER_BEARER }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+        run: python reputation_watch.py
