@@ -9,7 +9,7 @@ import os
 from openai import OpenAI
 
 # --- 初期設定 ---
-KEYWORDS = ["横山直和", "瀧本ゆとり", "なかむら矯正歯科"]
+KEYWORDS = ["横山直和", "瀧本　ゆとり", "なかむら矯正歯科", "横須賀輝尚", "和佐大輔", "右京雅生", "なかむら矯正歯科", "行政書士法改正"]
 CALOO_URL_TEMPLATE = "https://caloo.jp/search?keyword={keyword}"
 TWITTER_BEARER = os.getenv("TWITTER_BEARER")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -73,7 +73,7 @@ def send_email():
     from email.mime.application import MIMEApplication
 
     msg = MIMEMultipart()
-    msg["Subject"] = "週次風評レポート"
+    msg["Subject"] = "風評レポート"
     msg["From"] = GMAIL_USER
     msg["To"] = RECIPIENT
 
@@ -94,28 +94,3 @@ def send_email():
 
 # --- メイン処理 ---
 def main():
-   # --- Googleクチコミ：なかむら矯正歯科 ---
-url_nakamura = "https://g.co/kgs/NNDaiD5"
-texts1 = fetch_google_reviews(url_nakamura)
-scores1 = analyze_sentiment(texts1)
-for t, s in zip(texts1, scores1):
-    records.append({
-        "date": today.date(),
-        "keyword": "Googleクチコミ（なかむら矯正歯科）",
-        "source": "Googleレビュー",
-        "text": t,
-        "sentiment": s
-    })
-
-# --- Googleクチコミ：スタジオブリジャ ---
-url_bridger = "https://www.google.com/maps/place/スタジオブリジャ/@35.3938045,139.4493776,17z"
-texts2 = fetch_google_reviews(url_bridger)
-scores2 = analyze_sentiment(texts2)
-for t, s in zip(texts2, scores2):
-    records.append({
-        "date": today.date(),
-        "keyword": "Googleクチコミ（スタジオブリジャ）",
-        "source": "Googleレビュー",
-        "text": t,
-        "sentiment": s
-    })
