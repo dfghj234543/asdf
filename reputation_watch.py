@@ -1,20 +1,18 @@
 import requests
 from bs4 import BeautifulSoup
-import tweepy
 import pandas as pd
 import matplotlib.pyplot as plt
 from fpdf import FPDF
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 from openai import OpenAI
 
 # --- 初期設定 ---
-KEYWORDS = ["横山直和", "瀧本　ゆとり", "なかむら矯正歯科", "横須賀輝尚", "和佐大輔", "右京雅生", "なかむら矯正歯科", "行政書士法改正"]
+KEYWORDS = ["横山直和", "瀧本　ゆとり", "なかむら矯正歯科", "横須賀輝尚", "和佐大輔", "右京雅生", "行政書士法改正"]
 CALOO_URL_TEMPLATE = "https://caloo.jp/search?keyword={keyword}"
-TWITTER_BEARER = os.getenv("TWITTER_BEARER")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GMAIL_USER = "1yokogyou@gmail.com"
-GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS")  # アプリパスワード
+GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS")
 RECIPIENT = GMAIL_USER
 
 # --- ユーティリティ関数 ---
@@ -28,11 +26,6 @@ def fetch_cahoo(keyword):
     res = requests.get(CALOO_URL_TEMPLATE.format(keyword=keyword))
     soup = BeautifulSoup(res.text, 'html.parser')
     return [el.get_text().strip() for el in soup.select(".review-comment")]
-
-def fetch_twitter(keyword):
-    client = tweepy.Client(bearer_token=TWITTER_BEARER)
-    tweets = client.search_recent_tweets(query=keyword, max_results=10)
-    return [t.text for t in tweets.data] if tweets.data else []
 
 def analyze_sentiment(texts):
     client = OpenAI(api_key=OPENAI_API_KEY)
@@ -68,7 +61,6 @@ def generate_report(df):
 
 def send_email():
     import smtplib
-    from email.mime.base import MIMEBase
     from email.mime.multipart import MIMEMultipart
     from email.mime.application import MIMEApplication
 
@@ -97,7 +89,7 @@ def main():
     records = []
     today = datetime.now()
     for kw in KEYWORDS:
-        for source, fn in [("Google", fetch_google_snippets), ("Caloo", fetch_cahoo), ("Twitter", fetch_twitter)]:
+        for source, fn in [("Google", fetch_google_snippets), ("Caloo", fetch_cahoo)]:
             texts = fn(kw)
             scores = analyze_sentiment(texts)
             for t, s in zip(texts, scores):
