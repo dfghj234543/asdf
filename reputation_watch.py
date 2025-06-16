@@ -95,8 +95,6 @@ def send_email():
     server.quit()
 
 # --- メイン処理 ---
-def main(
-# --- メイン処理 ---
 def main():
     records = []
     today = datetime.now()
