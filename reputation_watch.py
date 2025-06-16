@@ -15,7 +15,7 @@ GMAIL_USER = "1yokogyou@gmail.com"
 GMAIL_APP_PASS = os.getenv("GMAIL_APP_PASS")
 RECIPIENT = GMAIL_USER
 
-# --- ユーティリティ関数 ---
+# --- データ取得関数 ---
 def fetch_google_snippets(keyword):
     url = f"https://www.google.com/search?q={keyword}"
     res = requests.get(url, headers={"User-Agent":"Mozilla/5.0"})
@@ -27,25 +27,30 @@ def fetch_cahoo(keyword):
     soup = BeautifulSoup(res.text, 'html.parser')
     return [el.get_text().strip() for el in soup.select(".review-comment")]
 
+# --- 感情分析 ---
 def analyze_sentiment(texts):
     client = OpenAI(api_key=OPENAI_API_KEY)
     scores = []
     for text in texts:
-        resp = client.chat.completions.create(
-            messages=[
-                {"role":"system","content":"You are sentiment analyzer. Score from -1 to 1."},
-                {"role":"user","content":text}
-            ],
-            model="gpt-3.5-turbo"
-        )
-        content = resp.choices[0].message.content.strip()
         try:
+            resp = client.chat.completions.create(
+                messages=[
+                    {"role":"system","content":"You are sentiment analyzer. Score from -1 to 1."},
+                    {"role":"user","content":text}
+                ],
+                model="gpt-3.5-turbo"
+            )
+            content = resp.choices[0].message.content.strip()
             scores.append(float(content))
         except:
             scores.append(0.0)
     return scores
 
+# --- レポート生成 ---
 def generate_report(df):
+    if df.empty or 'date' not in df.columns:
+        print("データがないためレポート生成スキップ")
+        return
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
@@ -59,6 +64,7 @@ def generate_report(df):
     pdf.image(png, w=180)
     pdf.output("weekly_report.pdf")
 
+# --- メール送信 ---
 def send_email():
     import smtplib
     from email.mime.multipart import MIMEMultipart
@@ -69,14 +75,18 @@ def send_email():
     msg["From"] = GMAIL_USER
     msg["To"] = RECIPIENT
 
-    with open("weekly_report.pdf","rb") as f:
-        part = MIMEApplication(f.read(), _subtype="pdf")
-        part.add_header('Content-Disposition','attachment',filename="weekly_report.pdf")
-        msg.attach(part)
-    with open("weekly_data.csv","rb") as f:
-        part2 = MIMEApplication(f.read(), _subtype="csv")
-        part2.add_header('Content-Disposition','attachment',filename="weekly_data.csv")
-        msg.attach(part2)
+    try:
+        with open("weekly_report.pdf", "rb") as f:
+            part = MIMEApplication(f.read(), _subtype="pdf")
+            part.add_header('Content-Disposition', 'attachment', filename="weekly_report.pdf")
+            msg.attach(part)
+        with open("weekly_data.csv", "rb") as f:
+            part2 = MIMEApplication(f.read(), _subtype="csv")
+            part2.add_header('Content-Disposition', 'attachment', filename="weekly_data.csv")
+            msg.attach(part2)
+    except FileNotFoundError:
+        print("添付ファイルが見つかりません")
+        return
 
     server = smtplib.SMTP("smtp.gmail.com", 587)
     server.starttls()
@@ -85,19 +95,4 @@ def send_email():
     server.quit()
 
 # --- メイン処理 ---
-def main():
-    records = []
-    today = datetime.now()
-    for kw in KEYWORDS:
-        for source, fn in [("Google", fetch_google_snippets), ("Caloo", fetch_cahoo)]:
-            texts = fn(kw)
-            scores = analyze_sentiment(texts)
-            for t, s in zip(texts, scores):
-                records.append({"date": today.date(), "keyword": kw, "source": source, "text": t, "sentiment": s})
-    df = pd.DataFrame(records)
-    df.to_csv("weekly_data.csv", index=False)
-    generate_report(df)
-    send_email()
-
-if __name__ == "__main__":
-    main()
+def main(
