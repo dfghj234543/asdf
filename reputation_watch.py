@@ -94,3 +94,18 @@ def send_email():
 
 # --- メイン処理 ---
 def main():
+    records = []
+    today = datetime.now()
+    for kw in KEYWORDS:
+        for source, fn in [("Google", fetch_google_snippets), ("Caloo", fetch_cahoo), ("Twitter", fetch_twitter)]:
+            texts = fn(kw)
+            scores = analyze_sentiment(texts)
+            for t, s in zip(texts, scores):
+                records.append({"date": today.date(), "keyword": kw, "source": source, "text": t, "sentiment": s})
+    df = pd.DataFrame(records)
+    df.to_csv("weekly_data.csv", index=False)
+    generate_report(df)
+    send_email()
+
+if __name__ == "__main__":
+    main()
